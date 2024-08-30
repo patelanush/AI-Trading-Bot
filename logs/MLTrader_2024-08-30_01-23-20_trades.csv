@@ -1,0 +1,2 @@
+time,strategy,identifier,symbol,side,type,status,multiplier,time_in_force,asset.strike,asset.multiplier,asset.asset_type
+2023-01-19 09:30:00-05:00,MLTrader,5fe926dfebb94a4ab368f9d727789849,SPY,sell,market,new,1,gtc,0.0,1,stock

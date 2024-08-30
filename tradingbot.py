@@ -7,9 +7,39 @@ from datetime import datetime
 from alpaca_trade_api import REST 
 from timedelta import Timedelta 
 from finbert_utils import estimate_sentiment
+import mysql.connector
+from mysql.connector import Error
 
-API_KEY = "Personal API KEY" 
-API_SECRET = "Personal API Secret" 
+
+DB_HOST = 'localhost'
+DB_USER = 'root'
+DB_PASSWORD = 'my_password'
+DB_NAME = 'trading_bot_db'
+
+def insert_trade(trade_id, symbol, action, quantity, price, sentiment, probability, last_trade_action, take_profit_price, stop_loss_price):
+    try:
+        connection = mysql.connector.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME
+        )
+        cursor = connection.cursor()
+        sql = """INSERT INTO trades (trade_id, symbol, action, quantity, price, sentiment, probability, last_trade_action, take_profit_price, stop_loss_price) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        values = (trade_id, symbol, action, quantity, price, sentiment, probability, last_trade_action, take_profit_price, stop_loss_price)
+        cursor.execute(sql, values)
+        connection.commit()
+    except Error as e:
+        print(f"ErrorSQL: {e}")
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+
+
+API_KEY = "API KEY" 
+API_SECRET = "API_SECRET" 
 BASE_URL = "https://paper-api.alpaca.markets/v2"
 
 ALPACA_CREDS = {
@@ -55,6 +85,12 @@ class MLTrader(Strategy):
                 order = self.create_order(self.symbol, quantity, "buy", type="bracket", take_profit_price=last_price*1.25, stop_loss_price=last_price*0.95)
                 self.submit_order(order) 
                 self.last_trade = "buy"
+
+                try:
+                    insert_trade(None, self.symbol, "buy", quantity, last_price, sentiment, probability, self.last_trade, last_price*1.25, last_price*0.95)
+                except Exception as e:
+                    print(f"erorr inserting trade: {e}")
+            
             elif sentiment == "negative" and probability > .999: 
                 if self.last_trade == "buy": 
                     self.sell_all() 
@@ -62,11 +98,15 @@ class MLTrader(Strategy):
                 self.submit_order(order) 
                 self.last_trade = "sell"
 
+                try:
+                   insert_trade(None, self.symbol, "sell", quantity, last_price, sentiment, probability, self.last_trade, last_price*0.8, last_price*1.05)
+                except Exception as e:
+                   print(f"erorr inserting trade: {e}")
 
         
 
-start_date = datetime(2022,11,24)
-end_date = datetime(2024,7,16) 
+start_date = datetime(2024,7,24)   
+end_date = datetime(2024,7,28) 
 
 broker = Alpaca(ALPACA_CREDS) 
 strategy = MLTrader(name='mlstrat', broker=broker, parameters={"symbol" : "SPY", "cash_at_risk" : 0.5})

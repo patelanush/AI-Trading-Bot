@@ -1,0 +1,2 @@
+time,strategy,identifier,symbol,side,type,status,multiplier,time_in_force,asset.strike,asset.multiplier,asset.asset_type
+2024-06-14 09:30:00-04:00,MLTrader,d890a90990d14243b7d0ab5367a10307,SPY,buy,market,new,1,gtc,0.0,1,stock
