@@ -25,8 +25,8 @@ def insert_trade(trade_id, symbol, action, quantity, price, sentiment, probabili
             database=DB_NAME
         )
         cursor = connection.cursor()
-        sql = """INSERT INTO trades (trade_id, symbol, action, quantity, price, sentiment, probability, last_trade_action, take_profit_price, stop_loss_price) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-        values = (trade_id, symbol, action, quantity, price, sentiment, probability, last_trade_action, take_profit_price, stop_loss_price)
+        sql = """INSERT INTO trades (symbol, action, quantity, price, sentiment, probability, last_trade_action, take_profit_price, stop_loss_price) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        values = (symbol, action, quantity, price, sentiment, probability, last_trade_action, take_profit_price, stop_loss_price)
         cursor.execute(sql, values)
         connection.commit()
     except Error as e:
@@ -87,7 +87,7 @@ class MLTrader(Strategy):
                 self.last_trade = "buy"
 
                 try:
-                    insert_trade(None, self.symbol, "buy", quantity, last_price, sentiment, probability, self.last_trade, last_price*1.25, last_price*0.95)
+                    insert_trade(self.symbol, "buy", quantity, last_price, sentiment, probability, self.last_trade, last_price*1.25, last_price*0.95)
                 except Exception as e:
                     print(f"erorr inserting trade: {e}")
             
@@ -99,7 +99,7 @@ class MLTrader(Strategy):
                 self.last_trade = "sell"
 
                 try:
-                   insert_trade(None, self.symbol, "sell", quantity, last_price, sentiment, probability, self.last_trade, last_price*0.8, last_price*1.05)
+                   insert_trade(self.symbol, "sell", quantity, last_price, sentiment, probability, self.last_trade, last_price*0.8, last_price*1.05)
                 except Exception as e:
                    print(f"erorr inserting trade: {e}")
 
@@ -111,3 +111,4 @@ end_date = datetime(2024,7,28)
 broker = Alpaca(ALPACA_CREDS) 
 strategy = MLTrader(name='mlstrat', broker=broker, parameters={"symbol" : "SPY", "cash_at_risk" : 0.5})
 strategy.backtest(YahooDataBacktesting, start_date, end_date,  parameters={"symbol":"SPY", "cash_at_risk":.5})
+ 
